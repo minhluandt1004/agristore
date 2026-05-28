@@ -25,31 +25,62 @@ public class UserService {
     private final CartService cartService;
     private final OrderService orderService;
 
-    // -------------------------------
-    // 1. Register
-    // -------------------------------
+    // =======================================
+    // 1. ĐĂNG NHẬP DÀNH CHO QUẢN TRỊ VIÊN
+    // =======================================
+    public UserResponse adminLogin(String loginId, String password) {
+        User user;
+
+        // Tự động nhận diện: Nếu có @ thì tìm bằng Email, ngược lại tìm bằng SĐT
+        if (loginId.contains("@")) {
+            user = userRepository.findByEmail(loginId)
+                    .orElseThrow(() -> new RuntimeException("Email không tồn tại trong hệ thống!"));
+        } else {
+            user = userRepository.findByPhone(loginId)
+                    .orElseThrow(() -> new RuntimeException("Số điện thoại không tồn tại trong hệ thống!"));
+        }
+
+        // Kiểm tra mật khẩu
+        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+            throw new RuntimeException("Mật khẩu không chính xác!");
+        }
+
+        // KIỂM TRA QUYỀN (RBAC): Chặn đứng CUSTOMER
+        if (user.getRole() == Role.CUSTOMER) {
+            throw new RuntimeException("Truy cập bị từ chối! Bạn không có quyền vào hệ thống quản trị.");
+        }
+
+        // (Tùy chọn) Nếu bạn CHỈ muốn ADMIN vào, không cho STAFF vào, thì bỏ comment dòng dưới:
+        // if (user.getRole() != Role.ADMIN) {
+        //     throw new RuntimeException("Truy cập bị từ chối! Chỉ tài khoản Quản trị viên cấp cao mới được phép.");
+        // }
+
+        // Kiểm tra tài khoản có bị khóa không
+        if (!user.getIsActive()) {
+            throw new RuntimeException("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ bộ phận hỗ trợ!");
+        }
+
+        return convertToUserResponse(user);
+    }
+
+    // =======================================
+    // 2. REGISTER (Đăng ký tài khoản)
+    // =======================================
     @Transactional
     public UserResponse register(UserRegisterRequest request) {
-
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             throw new RuntimeException("Mật khẩu xác nhận không khớp!");
         }
 
         User existing = userRepository.findByPhone(request.getPhone()).orElse(null);
 
-        // ===============================
-        // CASE 1: SĐT đã tồn tại
-        // ===============================
         if (existing != null) {
-
             boolean isGuest = Boolean.TRUE.equals(existing.getIsGuest());
-
-            // isGuest = false hoặc null => tài khoản thật
             if (!isGuest) {
                 throw new RuntimeException("Số điện thoại đã được sử dụng. Vui lòng đăng nhập.");
             }
 
-            // isGuest = true => nâng cấp guest thành user thật
+            // Nâng cấp guest thành user thật
             existing.setFullName(request.getFullName());
             existing.setEmail(request.getEmail());
             existing.setPasswordHash(passwordEncoder.encode(request.getPassword()));
@@ -57,14 +88,9 @@ public class UserService {
             existing.setIsActive(true);
             existing.setRole(Role.CUSTOMER);
 
-            User savedUser = userRepository.save(existing);
-
-            return convertToUserResponse(savedUser);
+            return convertToUserResponse(userRepository.save(existing));
         }
 
-        // ===============================
-        // CASE 2: SĐT chưa tồn tại
-        // ===============================
         User newUser = User.builder()
                 .fullName(request.getFullName())
                 .phone(request.getPhone())
@@ -78,21 +104,27 @@ public class UserService {
         return convertToUserResponse(userRepository.save(newUser));
     }
 
-    // -------------------------------
-    // 2. Login
-    // -------------------------------
+    // =======================================
+    // 3. ĐĂNG NHẬP CHO KHÁCH HÀNG (App/Web mua hàng)
+    // =======================================
     public UserResponse login(String phone, String password) {
         User user = userRepository.findByPhone(phone)
                 .orElseThrow(() -> new RuntimeException("Số điện thoại không tồn tại!"));
+
         if (!passwordEncoder.matches(password, user.getPasswordHash())) {
             throw new RuntimeException("Mật khẩu không chính xác!");
         }
+
+        if (!user.getIsActive()) {
+            throw new RuntimeException("Tài khoản của bạn đã bị khóa!");
+        }
+
         return convertToUserResponse(user);
     }
 
-    // -------------------------------
-    // 3. Update profile
-    // -------------------------------
+    // =======================================
+    // 4. QUẢN LÝ HỒ SƠ & MẬT KHẨU
+    // =======================================
     @Transactional
     public UserResponse updateProfile(Long userId, String fullName, String email) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
@@ -101,9 +133,6 @@ public class UserService {
         return convertToUserResponse(userRepository.save(user));
     }
 
-    // -------------------------------
-    // 4. Change password
-    // -------------------------------
     @Transactional
     public void changePassword(Long userId, PasswordRequest request) {
         User user = userRepository.findById(userId)
@@ -120,9 +149,9 @@ public class UserService {
         userRepository.save(user);
     }
 
-    // -------------------------------
-    // 5. Address management
-    // -------------------------------
+    // =======================================
+    // 5. QUẢN LÝ SỔ ĐỊA CHỈ
+    // =======================================
     public List<AddressResponse> getAddresses(Long userId) {
         return addressRepository.findByUserIdCustomOrder(userId).stream()
                 .map(this::convertToAddressResponse)
@@ -172,25 +201,22 @@ public class UserService {
         addressRepository.saveAll(addresses);
     }
 
-    // -------------------------------
-    // 6. Guest / Merge
-    // -------------------------------
+    // =======================================
+    // 6. GUEST (Khách vãng lai) & MERGE GIỎ HÀNG
+    // =======================================
     @Transactional
     public User createOrGetGuest(String phone, String fullName, String email) {
         User existingByPhone = userRepository.findByPhone(phone).orElse(null);
 
         if (existingByPhone != null) {
             boolean isGuest = Boolean.TRUE.equals(existingByPhone.getIsGuest());
-
             if (!isGuest) {
                 throw new RuntimeException("Số điện thoại đã có tài khoản. Vui lòng đăng nhập để mua hàng.");
             }
-
             return existingByPhone;
         }
 
         String tempPassword = UUID.randomUUID().toString();
-
         return userRepository.save(
                 User.builder()
                         .phone(phone)
@@ -214,28 +240,24 @@ public class UserService {
         orderService.mergeGuestOrders(userId, guestUserId);
     }
 
-    // -------------------------------
-    // 7. Check phone exists
-    // -------------------------------
+    // =======================================
+    // 7. KIỂM TRA TỒN TẠI
+    // =======================================
     public boolean existsByPhone(String phone) {
         User user = userRepository.findByPhone(phone).orElse(null);
-
         if (user == null) {
             return false;
         }
-
-        // Chỉ TRUE mới là guest.
-        // FALSE hoặc NULL đều xem là tài khoản thật đã được sử dụng.
         return !Boolean.TRUE.equals(user.getIsGuest());
     }
 
     public boolean existsByEmail(String email) {
-        return false;
+        return userRepository.findByEmail(email).isPresent();
     }
 
-    // -------------------------------
-    // Mappers
-    // -------------------------------
+    // =======================================
+    // MAPPERS
+    // =======================================
     public UserResponse convertToUserResponse(User user) {
         return UserResponse.builder()
                 .id(user.getId())

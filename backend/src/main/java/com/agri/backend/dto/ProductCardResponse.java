@@ -21,6 +21,9 @@ public class ProductCardResponse {
 
     private String categorySlug;
 
+    // Thêm trường brandName vào đây để sửa lỗi
+    private String brandName;
+
     private String primaryImageUrl;
 
     private BigDecimal minPrice;

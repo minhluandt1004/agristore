@@ -2,10 +2,12 @@ package com.agri.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SoftDelete;
 
 @Entity
 @Table(name = "product_images")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@SoftDelete(columnName = "is_deleted")
 public class ProductImage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

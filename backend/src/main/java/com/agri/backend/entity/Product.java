@@ -3,13 +3,18 @@ package com.agri.backend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SoftDelete;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "products")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@SoftDelete(columnName = "is_deleted")
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,6 +55,12 @@ public class Product {
     @Column(name = "usage_purpose", columnDefinition = "TEXT")
     private String usagePurpose;
 
+    @Column(name = "shelf_life")
+    private String shelfLife;  // <-- thêm hạn sử dụng
+
+    @Column(name = "dosage_rate")
+    private String dosageRate; // <-- thêm tỷ lệ pha
+
     // -- Mô tả & Hướng dẫn --
     @Column(name = "short_desc", columnDefinition = "TEXT")
     private String shortDesc;
@@ -78,11 +89,12 @@ public class Product {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProductVariant> variants;
+    private List<ProductVariant> variants = new ArrayList<>();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProductImage> images;
+    private List<ProductImage> images = new ArrayList<>();
 
     @Column(name = "review_video_url")
     private String reviewVideoUrl;
+
 }

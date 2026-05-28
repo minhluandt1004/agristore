@@ -84,6 +84,9 @@ export default function ProductDetail() {
               phiDays: foundProduct.phiDays ? `${foundProduct.phiDays} ngày` : 'Đang cập nhật',
               targetCrops: foundProduct.targetCrops || 'Đa dạng cây trồng',
               usagePurpose: foundProduct.usagePurpose || 'Đang cập nhật',
+
+              shelfLife: foundProduct.shelfLife || 'Đang cập nhật',        
+              dosageRate: foundProduct.dosageRate || 'Đang cập nhật',       
             },
             categorySlug: foundProduct.categorySlug || '',
             categoryName: foundProduct.categoryName || 'Danh mục',
@@ -521,6 +524,15 @@ export default function ProductDetail() {
                         <tr className="border-b border-gray-100">
                           <th className="py-3 text-gray-500 font-medium">Cây trồng mục tiêu</th>
                           <td className="py-3 font-bold text-gray-800">{product.specs.targetCrops}</td>
+                        </tr>
+                        <tr className="border-b border-gray-100">
+                          <th className="py-3 text-gray-500 font-medium">Hạn sử dụng</th>
+                          <td className="py-3 font-bold text-gray-800">{product.specs.shelfLife}</td>
+                        </tr>
+
+                        <tr className="border-b border-gray-100">
+                          <th className="py-3 text-gray-500 font-medium">Tỷ lệ pha</th>
+                          <td className="py-3 font-bold text-gray-800">{product.specs.dosageRate}</td>
                         </tr>
                         <tr>
                           <th className="py-3 text-gray-500 font-medium align-top">Công dụng chính</th>

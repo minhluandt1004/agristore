@@ -1,19 +1,14 @@
 package com.agri.backend.dto;
 
-import lombok.Builder;
 import lombok.Data;
 import java.math.BigDecimal;
 
 @Data
-@Builder
-public class VariantResponse {
-    private Long id;
+public class VariantRequest {
     private String sku;
     private String weightVolume;
+    private BigDecimal importPrice;
     private BigDecimal price;
     private BigDecimal oldPrice;
-
-    private BigDecimal importPrice;
     private Integer stockQuantity;
-    private String imageUrl;
 }

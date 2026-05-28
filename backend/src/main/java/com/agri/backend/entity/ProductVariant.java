@@ -2,17 +2,15 @@ package com.agri.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SoftDelete;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "product_variants")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@SoftDelete(columnName = "is_deleted")
 public class ProductVariant {
 
     @Id
@@ -35,6 +33,9 @@ public class ProductVariant {
 
     @Column(name = "old_price", precision = 12, scale = 2)
     private BigDecimal oldPrice;
+
+    @Column(name = "import_price", precision = 12, scale = 2)
+    private BigDecimal importPrice;
 
     @Column(name = "stock_quantity")
     private Integer stockQuantity = 0;

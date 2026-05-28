@@ -1,5 +1,6 @@
 package com.agri.backend.controller;
 
+import com.agri.backend.constants.OrderStatus;
 import com.agri.backend.dto.CheckoutRequest;
 import com.agri.backend.dto.OrderItemResponse;
 import com.agri.backend.dto.OrderResponse;
@@ -66,6 +67,26 @@ public class OrderController {
             e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
+    }
+
+    @PostMapping("/{orderId}/status")
+    public ResponseEntity<OrderResponse> updateStatus(
+            @PathVariable Long orderId,
+            @RequestParam String status) { // Nhận string từ frontend
+        // Chuyển đổi string sang Enum
+        OrderStatus orderStatus = OrderStatus.valueOf(status);
+        Order order = orderService.updateOrderStatus(orderId, orderStatus);
+        return ResponseEntity.ok(mapToResponse(order));
+    }
+
+    // Thêm hàm này để Admin lấy danh sách tất cả đơn hàng
+    @GetMapping("/admin/all")
+    public ResponseEntity<List<OrderResponse>> getAllOrders() {
+        List<Order> orders = orderService.findAllOrders(); // Bạn cần viết hàm này ở Service
+        List<OrderResponse> response = orders.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     private OrderResponse mapToResponse(Order order) {

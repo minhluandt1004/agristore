@@ -1,19 +1,23 @@
-import { Outlet } from 'react-router-dom';
-import AdminSidebar from './components/AdminSidebar';
-import AdminHeader from './components/AdminHeader';
+import React from "react";
+import { Outlet } from "react-router-dom";
+import AdminHeader from "./components/AdminHeader"; 
+import AdminSidebar from "./components/AdminSidebar"; 
 
 const AdminLayout = () => {
+  const admin = JSON.parse(localStorage.getItem("admin"));
+
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden font-sans">
-      {/* Sidebar bên trái */}
+    <div className="flex min-h-screen bg-gray-50">
       <AdminSidebar />
-      
-      <div className="flex-1 flex flex-col w-full overflow-hidden">
-        {/* Header phía trên */}
-        <AdminHeader />
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
         
-        {/* Khu vực nội dung chính cuộn được */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+        {/* Truyền fullName và role xuống Header */}
+        <AdminHeader 
+          adminName={admin?.fullName} 
+          adminRole={admin?.role} 
+        />
+        
+        <main className="flex-1 overflow-y-auto p-6">
           <Outlet />
         </main>
       </div>

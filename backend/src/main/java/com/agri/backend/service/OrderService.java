@@ -90,17 +90,76 @@ public class OrderService {
             variantRepository.save(variant);
         }
 
+        // 🔥 FIX LỖI NO SESSION CHO LUỒNG TẠO ĐƠN
+        Hibernate.initialize(order.getItems());
         order.getItems().forEach(i -> {
             Hibernate.initialize(i.getVariant());
             Hibernate.initialize(i.getVariant().getProduct());
             Hibernate.initialize(i.getVariant().getProduct().getImages());
         });
+        Hibernate.initialize(order.getPaymentMethod());
+        Hibernate.initialize(order.getShippingAddress());
+        Hibernate.initialize(order.getUser());
 
         if (Boolean.TRUE.equals(request.getClearCartAfterCheckout())) {
             cartItemRepository.deleteAllByUserId(user.getId());
         }
 
         return order;
+    }
+
+    @Transactional
+    public Order updateOrderStatus(Long orderId, OrderStatus newStatus) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            throw new RuntimeException("Đơn hàng đã bị hủy, không thể thay đổi trạng thái!");
+        }
+        if (order.getStatus() == OrderStatus.COMPLETED) {
+            throw new RuntimeException("Đơn hàng đã hoàn thành, không thể thay đổi trạng thái!");
+        }
+
+        order.setStatus(newStatus);
+
+        if (newStatus == OrderStatus.CANCELLED) {
+            order.getItems().forEach(item -> {
+                ProductVariant variant = item.getVariant();
+                variant.setStockQuantity(variant.getStockQuantity() + item.getQuantity());
+                variantRepository.save(variant);
+            });
+            order.setPaymentStatus(PaymentStatus.UNPAID);
+        }
+
+        // 🔥 FIX LỖI NO SESSION CHO LUỒNG ADMIN CẬP NHẬT TRẠNG THÁI
+        Hibernate.initialize(order.getItems());
+        order.getItems().forEach(item -> {
+            Hibernate.initialize(item.getVariant());
+            Hibernate.initialize(item.getVariant().getProduct());
+            Hibernate.initialize(item.getVariant().getProduct().getImages());
+        });
+        Hibernate.initialize(order.getPaymentMethod());
+        Hibernate.initialize(order.getShippingAddress());
+        Hibernate.initialize(order.getUser());
+
+        return orderRepository.save(order);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Order> findAllOrders() {
+        List<Order> orders = orderRepository.findAll();
+        orders.forEach(order -> {
+            Hibernate.initialize(order.getItems());
+            order.getItems().forEach(item -> {
+                Hibernate.initialize(item.getVariant());
+                Hibernate.initialize(item.getVariant().getProduct());
+                Hibernate.initialize(item.getVariant().getProduct().getImages());
+            });
+            Hibernate.initialize(order.getPaymentMethod());
+            Hibernate.initialize(order.getShippingAddress());
+            Hibernate.initialize(order.getUser()); // 🔥 THÊM CHO LUỒNG LẤY TẤT CẢ ĐƠN ADMIN
+        });
+        return orders;
     }
 
     @Transactional
@@ -113,6 +172,18 @@ public class OrderService {
             order.setPaymentStatus(PaymentStatus.UNPAID);
             order.setStatus(OrderStatus.CANCELLED);
         }
+
+        // 🔥 FIX LỖI NO SESSION CHO LUỒNG CẬP NHẬT THANH TOÁN (WEBHOOK/VNPAY CALLBACK)
+        Hibernate.initialize(order.getItems());
+        order.getItems().forEach(item -> {
+            Hibernate.initialize(item.getVariant());
+            Hibernate.initialize(item.getVariant().getProduct());
+            Hibernate.initialize(item.getVariant().getProduct().getImages());
+        });
+        Hibernate.initialize(order.getPaymentMethod());
+        Hibernate.initialize(order.getShippingAddress());
+        Hibernate.initialize(order.getUser());
+
         return orderRepository.save(order);
     }
 
@@ -131,6 +202,7 @@ public class OrderService {
 
             Hibernate.initialize(order.getPaymentMethod());
             Hibernate.initialize(order.getShippingAddress());
+            Hibernate.initialize(order.getUser()); // 🔥 THÊM CHO LUỒNG LẤY ĐƠN HÀNG LỊCH SỬ CỦA USER
         });
 
         return orders;

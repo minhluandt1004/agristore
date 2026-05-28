@@ -75,15 +75,7 @@ function App() {
           </Routes>
         </main>
 
-        <Routes>
-          <Route path="/admin/*" element={null} />
-          <Route path="*" element={
-            <>
-              <Footer />
-              <FloatingContact />
-            </>
-          } />
-        </Routes>
+        
       </div>
     </Router>
   );

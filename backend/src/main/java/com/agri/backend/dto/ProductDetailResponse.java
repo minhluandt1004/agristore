@@ -42,5 +42,8 @@ public class ProductDetailResponse {
     private Integer phiDays;
     private String targetCrops;
     private String usagePurpose;
-    private List<VariantResponse> variants; 
+    private String shelfLife;     // <-- thêm hạn sử dụng
+    private String dosageRate;    // <-- thêm tỷ lệ pha
+
+    private List<VariantResponse> variants;
 }

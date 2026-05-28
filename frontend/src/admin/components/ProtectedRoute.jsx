@@ -1,11 +1,11 @@
-// src/admin/components/ProtectedRoute.jsx
-import React from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from 'react-router-dom';
 
-const ProtectedRoute = ({ children }) => {
-  const admin = JSON.parse(localStorage.getItem("admin"));
-  if (!admin) return <Navigate to="/admin/login" />;
-  return children;
+const ProtectedRoute = () => {
+  // Kiểm tra xem có dữ liệu admin trong localStorage không
+  const adminData = localStorage.getItem('admin');
+  
+  // Nếu có thì cho phép truy cập các Route con (Outlet), nếu không thì đẩy về trang Login
+  return adminData ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
 export default ProtectedRoute;

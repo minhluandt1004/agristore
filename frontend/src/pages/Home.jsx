@@ -17,73 +17,50 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
 
-        const catResponse = await fetch("http://localhost:8080/api/v1/categories");
-        let catData = [];
-        if (catResponse.ok) {
-          catData = await catResponse.json();
-          setCategories(catData);
-        }
+      // 1. Gọi API lấy Sản phẩm gom nhóm theo Danh mục (Home page)
+      const groupedRes = await fetch("http://localhost:8080/api/v1/products/home-grouped?limit=8");
+      
+      // 2. Gọi API Danh mục (Dùng cho Menu bên trái)
+      const catRes = await fetch("http://localhost:8080/api/v1/categories");
+      
+      // 3. Gọi các API phụ (Tin tức, Video)
+      const newsRes = await fetch("http://localhost:8080/api/v1/posts/news");
+      const videoRes = await fetch("http://localhost:8080/api/v1/posts/videos");
 
-        const prodResponse = await fetch(API_ENDPOINTS.GET_ALL_PRODUCTS, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" }
-        });
-
-        if (!prodResponse.ok) throw new Error("Không thể tải sản phẩm");
-
-        const prodData = await prodResponse.json();
-        const productArray = Array.isArray(prodData) ? prodData : (prodData.content || []);
-
-        const dynamicGroupedData = [];
-
-        catData.forEach(rootCat => {
-          const validSlugs = [rootCat.slug];
-
-          if (rootCat.children) {
-            rootCat.children.forEach(child => validSlugs.push(child.slug));
-          }
-
-          const categoryProducts = productArray.filter(p =>
-            validSlugs.includes(p.categorySlug)
-          );
-
-          if (categoryProducts.length > 0) {
-            dynamicGroupedData.push({
-              categoryId: rootCat.id,
-              categoryName: rootCat.name,
-              categorySlug: rootCat.slug,
-              products: categoryProducts.slice(0, 8)
-            });
-          }
-        });
-
-        setGroupedCategories(dynamicGroupedData);
-
-        const newsResponse = await fetch("http://localhost:8080/api/v1/posts/news");
-        if (newsResponse.ok) {
-          const newsData = await newsResponse.json();
-          setHomeNews(newsData.slice(0, 2));
-        }
-
-        const videoResponse = await fetch("http://localhost:8080/api/v1/posts/videos");
-        if (videoResponse.ok) {
-          const videoData = await videoResponse.json();
-          setHomeVideos(videoData.slice(0, 2));
-        }
-
-      } catch (error) {
-        console.error("Lỗi:", error);
-      } finally {
-        setIsLoading(false);
+      // Xử lý kết quả trả về
+      if (groupedRes.ok) {
+        const data = await groupedRes.json();
+        setGroupedCategories(data);
       }
-    };
 
-    fetchData();
-  }, []);
+      if (catRes.ok) {
+        const catData = await catRes.json();
+        setCategories(catData);
+      }
+
+      if (newsRes.ok) {
+        const newsData = await newsRes.json();
+        setHomeNews(newsData.slice(0, 2));
+      }
+
+      if (videoRes.ok) {
+        const videoData = await videoRes.json();
+        setHomeVideos(videoData.slice(0, 2));
+      }
+
+    } catch (error) {
+      console.error("Lỗi khi tải dữ liệu trang chủ:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  fetchData();
+}, []);
 
   if (isLoading) {
     return (
