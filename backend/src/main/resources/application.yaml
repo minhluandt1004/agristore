@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: backend
+
+  # 1. Cấu hình kết nối MySQL
+  datasource:
+    url: jdbc:mysql://localhost:3306/agri_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
+    username: root
+    password: MinhLuan.1004 # Thay bằng mật khẩu MySQL của bạn
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # 2. Cấu hình JPA / Hibernate
+  jpa:
+    hibernate:
+      # 'update': Tự động tạo bảng mới hoặc cập nhật thêm cột nếu bạn sửa Entity
+      ddl-auto: update
+    show-sql: true # Hiển thị câu lệnh SQL ra console để theo dõi
+    properties:
+      hibernate:
+        format_sql: true # Định dạng SQL cho dễ đọc
+        dialect: org.hibernate.dialect.MySQLDialect
+    open-in-view: false # Tối ưu hiệu năng bằng cách đóng EntityManager sớm
+
+  # 3. Cấu hình upload file (Nếu sau này bạn muốn upload ảnh/video trực tiếp)
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+# 4. Cấu hình Log (Tùy chọn)
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE # Xem giá trị truyền vào câu SQL

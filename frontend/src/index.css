@@ -1,0 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Lexend', sans-serif;
+  @apply bg-[#f2f5f3] text-gray-800;
+}
+
+.agriculture-gradient { background: linear-gradient(135deg, #064e3b 0%, #166534 100%); }
+.flash-sale-header { background: linear-gradient(90deg, #ea580c 0%, #f59e0b 100%); }
+.category-item {
+  @apply flex items-center gap-3 px-4 py-3 hover:bg-[#eefcf2] hover:text-[#047857] cursor-pointer transition-colors text-sm font-medium border-b border-gray-100 last:border-0 text-gray-700;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #047857; border-radius: 10px; }
